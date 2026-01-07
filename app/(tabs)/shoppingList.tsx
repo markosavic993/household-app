@@ -1,3 +1,4 @@
+import ShoppingListItem from "@/components/ShoppingListItem";
 import { ShoppingItem } from "@/types/ShoppingItem";
 import { useState } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
@@ -18,16 +19,7 @@ export default function ShoppingListScreen() {
       <FlatList
         data={items}
         renderItem={({ item }) => (
-          <View style={styles.item}>
-            <Text
-              style={[
-                styles.itemText,
-                item.completed && styles.completed,
-              ]}
-            >
-              {item.quantity} x {item.name}
-            </Text>
-          </View>
+          <ShoppingListItem item={item} />
         )}
         keyExtractor={item => item.id}
       />
@@ -45,20 +37,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '600',
     marginBottom: 16,
-    color: '#f2f2f2',
-  },
-  item: {
-    padding: 12,
-    backgroundColor: '#25292e',
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  itemText: {
-    fontSize: 16,
-    color: '#f2f2f2',
-  },
-  completed: {
-    textDecorationLine: 'line-through',
     color: '#f2f2f2',
   },
 });
