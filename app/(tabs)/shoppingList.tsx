@@ -11,6 +11,17 @@ const INITIAL_ITEMS: ShoppingItem[] = [
 
 export default function ShoppingListScreen() {
   const [items, setItems] = useState<ShoppingItem[]>(INITIAL_ITEMS);
+  const toggleItem = (id: string) => {
+    setItems(prevItems =>
+      prevItems.map(item =>
+        item.id === id ? { ...item, completed: !item.completed } : item
+      )
+    );
+  }
+  const deleteItem = (id: string) => {
+    setItems(prevItems => prevItems.filter(item => item.id !== id));
+  }
+  
 
   return (
     <View style={styles.container}>
@@ -19,7 +30,11 @@ export default function ShoppingListScreen() {
       <FlatList
         data={items}
         renderItem={({ item }) => (
-          <ShoppingListItem item={item} />
+          <ShoppingListItem 
+          item={item} 
+          onToggle={toggleItem}
+          onDelete={deleteItem}
+          />
         )}
         keyExtractor={item => item.id}
       />
