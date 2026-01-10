@@ -30,6 +30,14 @@ export default function TabLayout() {
                         <Ionicons name={focused ? "list-sharp" : "list-outline"} size={24} color={color} />
                     )
                 }} />
+            <Tabs.Screen
+                name="stickerSmash"
+                options={{
+                    title: "Уређивање слике",
+                    tabBarIcon: ({ color, focused }) => (
+                        <Ionicons name={focused ? "image-sharp" : "image-outline"} size={24} color={color} />
+                    )
+                }} />
         </Tabs>
     );
 }
