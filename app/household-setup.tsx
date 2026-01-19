@@ -1,16 +1,47 @@
 import { useAuth } from "@/context/AuthContext";
-import { createHousehold } from "@/services/householdService";
+import { useHousehold } from "@/context/HouseholdContext";
+import { useUserProfile } from "@/hooks/useUserProfie";
+import { createHousehold, getUserHouseholds, Household } from "@/services/householdService";
 import { router } from "expo-router";
-import { useState } from "react";
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 export default function HouseholdSetupScreen() {
     const { user } = useAuth();
+    const { profile } = useUserProfile();
+    const { setSelectedHouseholdId } = useHousehold();
     const [mode, setMode] = useState<'select' | 'create' | 'join'>('select');
     const [householdName, setHouseholdName] = useState('');
     const [inviteCode, setInviteCode] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [households, setHouseholds] = useState<Household[]>([]);
+    const [loadingHouseholds, setLoadingHouseholds] = useState(true);
+
+    useEffect(() => {
+        const fetchHouseholds = async () => {
+            if (!profile?.householdIds || profile.householdIds.length === 0) {
+                setLoadingHouseholds(false);
+                return;
+            }
+
+            try {
+                const fetchedHouseholds = await getUserHouseholds(profile.householdIds);
+                setHouseholds(fetchedHouseholds);
+            } catch (err) {
+                console.error('Error fetching households:', err);
+            } finally {
+                setLoadingHouseholds(false);
+            }
+        };
+
+        fetchHouseholds();
+    }, [profile]);
+
+    const handleSelectHousehold = async (householdId: string) => {
+        await setSelectedHouseholdId(householdId);
+        router.replace('/(tabs)');
+    };
 
     const handleCreateHousehold = async () => {
         if (!user) return;
@@ -23,8 +54,8 @@ export default function HouseholdSetupScreen() {
         setError(null);
 
         try {
-            await createHousehold(householdName, user.uid);
-            // Navigation will happen automatically via _layout.tsx watching profile changes
+            const newHouseholdId = await createHousehold(householdName, user.uid);
+            await setSelectedHouseholdId(newHouseholdId);
             router.replace('/(tabs)');
         } catch (err: any) {
             setError(err.message);
@@ -55,32 +86,71 @@ export default function HouseholdSetupScreen() {
 
     if (mode === 'select') {
         return (
-            <View style={styles.container}>
+            <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
                 <Text style={styles.title}>Добродошли!</Text>
-                <Text style={styles.subtitle}>Изаберите опцију за почетак</Text>
+                <Text style={styles.subtitle}>
+                    {households.length > 0 
+                        ? 'Изаберите домаћинство или направите ново'
+                        : 'Изаберите опцију за почетак'}
+                </Text>
 
-                <View style={styles.optionsContainer}>
-                    <Pressable
-                        style={styles.optionButton}
-                        onPress={() => setMode('create')}>
-                        <Text style={styles.optionIcon}>🏠</Text>
-                        <Text style={styles.optionTitle}>Направи домаћинство</Text>
-                        <Text style={styles.optionDescription}>
-                            Креирајте ново домаћинство и позовите чланове
-                        </Text>
-                    </Pressable>
+                {loadingHouseholds ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color="#fff" />
+                    </View>
+                ) : (
+                    <>
+                        {households.length > 0 && (
+                            <View style={styles.householdsSection}>
+                                <Text style={styles.sectionTitle}>Моја домаћинства</Text>
+                                {households.map((household) => (
+                                    <Pressable
+                                        key={household.id}
+                                        style={styles.householdItem}
+                                        onPress={() => handleSelectHousehold(household.id)}>
+                                        <View style={styles.householdInfo}>
+                                            <Text style={styles.householdIcon}>🏠</Text>
+                                            <View style={styles.householdDetails}>
+                                                <Text style={styles.householdName}>{household.name}</Text>
+                                                <Text style={styles.householdMeta}>
+                                                    {household.members.length} {household.members.length === 1 ? 'члан' : 'чланова'}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                        <Text style={styles.arrowIcon}>→</Text>
+                                    </Pressable>
+                                ))}
+                            </View>
+                        )}
 
-                    <Pressable
-                        style={styles.optionButton}
-                        onPress={() => setMode('join')}>
-                        <Text style={styles.optionIcon}>🔗</Text>
-                        <Text style={styles.optionTitle}>Придружи се домаћинству</Text>
-                        <Text style={styles.optionDescription}>
-                            Унесите код позивнице да се придружите
+                        <Text style={styles.sectionTitle}>
+                            {households.length > 0 ? 'Или креирајте ново' : 'Изаберите опцију'}
                         </Text>
-                    </Pressable>
-                </View>
-            </View>
+
+                        <View style={styles.optionsContainer}>
+                            <Pressable
+                                style={styles.optionButton}
+                                onPress={() => setMode('create')}>
+                                <Text style={styles.optionIcon}>🏠</Text>
+                                <Text style={styles.optionTitle}>Направи домаћинство</Text>
+                                <Text style={styles.optionDescription}>
+                                    Креирајте ново домаћинство и позовите чланове
+                                </Text>
+                            </Pressable>
+
+                            <Pressable
+                                style={styles.optionButton}
+                                onPress={() => setMode('join')}>
+                                <Text style={styles.optionIcon}>🔗</Text>
+                                <Text style={styles.optionTitle}>Придружи се домаћинству</Text>
+                                <Text style={styles.optionDescription}>
+                                    Унесите код позивнице да се придружите
+                                </Text>
+                            </Pressable>
+                        </View>
+                    </>
+                )}
+            </ScrollView>
         );
     }
 
@@ -171,7 +241,9 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#25292e',
         padding: 24,
-        justifyContent: 'center',
+    },
+    scrollContent: {
+        paddingVertical: 24,
     },
     title: {
         fontSize: 32,
@@ -185,6 +257,55 @@ const styles = StyleSheet.create({
         color: '#999',
         marginBottom: 32,
         textAlign: 'center',
+    },
+    loadingContainer: {
+        padding: 40,
+        alignItems: 'center',
+    },
+    householdsSection: {
+        marginBottom: 24,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#fff',
+        marginBottom: 16,
+        marginTop: 8,
+    },
+    householdItem: {
+        backgroundColor: '#464C55',
+        padding: 16,
+        borderRadius: 12,
+        marginBottom: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    householdInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    householdIcon: {
+        fontSize: 32,
+        marginRight: 12,
+    },
+    householdDetails: {
+        flex: 1,
+    },
+    householdName: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#fff',
+        marginBottom: 4,
+    },
+    householdMeta: {
+        fontSize: 14,
+        color: '#999',
+    },
+    arrowIcon: {
+        fontSize: 24,
+        color: '#ffd33d',
     },
     optionsContainer: {
         gap: 16,

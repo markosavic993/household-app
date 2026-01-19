@@ -1,7 +1,8 @@
-import { addDoc, arrayUnion, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { addDoc, arrayUnion, collection, doc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
 
 export interface Household {
+    id: string;
     name: string;
     members: string[];
     createdAt: any;
@@ -15,7 +16,7 @@ export const createHousehold = async (
     if (!auth.currentUser) throw new Error('Not authenticated');
 
     try {
-        const householdData: Household = {
+        const householdData: Omit<Household, 'id'> = {
             name,
             members: [userId],
             createdAt: serverTimestamp(),
@@ -35,6 +36,30 @@ export const createHousehold = async (
         return docRef.id;
     } catch (error) {
         console.error('Error creating household:', error);
+        throw error;
+    }
+};
+
+export const getUserHouseholds = async (householdIds: string[]): Promise<Household[]> => {
+    if (!auth.currentUser) throw new Error('Not authenticated');
+    if (!householdIds || householdIds.length === 0) return [];
+
+    try {
+        const households: Household[] = [];
+        
+        for (const householdId of householdIds) {
+            const householdDoc = await getDoc(doc(db, 'households', householdId));
+            if (householdDoc.exists()) {
+                households.push({
+                    id: householdDoc.id,
+                    ...householdDoc.data()
+                } as Household);
+            }
+        }
+
+        return households;
+    } catch (error) {
+        console.error('Error fetching households:', error);
         throw error;
     }
 };
