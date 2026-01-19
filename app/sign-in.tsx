@@ -1,4 +1,5 @@
 import { auth } from "@/services/firebase";
+import { createUserInFirestore } from "@/services/userService";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput } from "react-native";
@@ -17,7 +18,9 @@ export default function SignInScreen() {
             if (isLogin) {
                 await signInWithEmailAndPassword(auth, email, password);
             } else {
-                await createUserWithEmailAndPassword(auth, email, password);
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                // Create user document in Firestore
+                await createUserInFirestore(userCredential.user.uid, email);
             }
             // Navigation will happen automatically via AuthContext
         } catch (err: any) {
