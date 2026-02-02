@@ -1,5 +1,15 @@
-import { ShoppingItem } from "@/types/ShoppingItem";
+import { useUserName } from "@/hooks/useUserName";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+
+type ShoppingItem = {
+  id: string;
+  name: string;
+  quantity: number;
+  completed: boolean;
+  addedBy?: string;
+  createdAt?: any;
+  updatedAt?: any;
+};
 
 type Props = {
   item: ShoppingItem,
@@ -8,6 +18,8 @@ type Props = {
 };
 
 export default function ShoppingListItem({ item, onToggle, onDelete }: Props) {
+  const { userName, loading } = useUserName(item.addedBy);
+
   return (
     <View style={styles.container}>
       <Pressable
@@ -21,6 +33,11 @@ export default function ShoppingListItem({ item, onToggle, onDelete }: Props) {
         >
           {item.quantity} x {item.name}
         </Text>
+        {item.addedBy && !loading && (
+          <Text style={styles.addedByText}>
+            Додао: {userName || 'Непознат'}
+          </Text>
+        )}
       </Pressable>
       <Pressable
         onPress={() => onDelete(item.id)}
@@ -47,10 +64,16 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 16,
     color: '#f2f2f2',
+    marginBottom: 4,
   },
   completed: {
     textDecorationLine: 'line-through',
-    color: '#f2f2f2',
+    color: '#999',
+  },
+  addedByText: {
+    fontSize: 12,
+    color: '#999',
+    fontStyle: 'italic',
   },
   deleteButton: {
     paddingHorizontal: 8,
