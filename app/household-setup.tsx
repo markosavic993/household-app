@@ -1,7 +1,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { useHousehold } from "@/context/HouseholdContext";
 import { useUserProfile } from "@/hooks/useUserProfie";
-import { createHousehold, getUserHouseholds, Household } from "@/services/householdService";
+import { createHousehold, getUserHouseholds, Household, joinHousehold } from "@/services/householdService";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
@@ -75,8 +75,9 @@ export default function HouseholdSetupScreen() {
         setError(null);
 
         try {
-            // TODO: Implement join functionality
-            setError('Функционалност придруживања још није имплементирана');
+            const householdId = await joinHousehold(inviteCode, user.uid);
+            await setSelectedHouseholdId(householdId);
+            router.replace('/(tabs)');
         } catch (err: any) {
             setError(err.message);
         } finally {
