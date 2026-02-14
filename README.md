@@ -1,50 +1,206 @@
-# Welcome to your Expo app 👋
+# 🏠 Smart Household App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A collaborative household management app built with React Native, Expo, and Firebase. Manage shopping lists and coordinate with your household members in real-time.
 
-## Get started
+## 📱 Features
 
-1. Install dependencies
+- **Multi-household support** - Join or create multiple households
+- **Real-time shopping lists** - Collaborate with household members instantly
+- **Invite system** - Share invite codes to add members to your household
+- **User authentication** - Secure sign-in/sign-up with Firebase Auth
+- **Persistent sessions** - Stay logged in across app restarts
+- **Serbian language UI** - Native Serbian interface
 
+## 🛠️ Tech Stack
+
+- **Frontend**: React Native with Expo
+- **Backend**: Firebase (Firestore + Authentication)
+- **Navigation**: Expo Router
+- **State Management**: React Context API
+- **Storage**: AsyncStorage for local persistence
+- **Language**: TypeScript
+
+## 📁 Project Structure
+
+```
+smart-household-app/
+├── app/                          # Expo Router screens
+│   ├── (tabs)/                   # Tab navigation
+│   │   ├── index.tsx            # Home screen
+│   │   └── shoppingList.tsx     # Shopping list screen
+│   ├── _layout.tsx              # Root layout with auth logic
+│   ├── sign-in.tsx              # Authentication screen
+│   └── household-setup.tsx      # Household selection/creation
+├── components/                   # Reusable components
+│   └── ShoppingListItem.tsx     # Shopping list item component
+├── context/                      # React Context providers
+│   ├── AuthContext.tsx          # Authentication state
+│   └── HouseholdContext.tsx     # Selected household state
+├── hooks/                        # Custom React hooks
+│   ├── useUserProfile.tsx       # User profile data
+│   └── useUserName.tsx          # Fetch user names
+├── services/                     # Firebase services
+│   ├── firebase.ts              # Firebase configuration
+│   ├── householdService.ts      # Household operations
+│   ├── shoppingListService.ts   # Shopping list operations
+│   └── userService.ts           # User operations
+└── types/                        # TypeScript types
+    └── ShoppingItem.ts          # Shopping item interface
+```
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js (v18+)
+- npm or yarn
+- Expo CLI
+- Firebase project
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd smart-household-app
+   ```
+
+2. **Install dependencies**
    ```bash
    npm install
    ```
 
-2. Start the app
-
-   ```bash
-   npx expo start
+3. **Configure Firebase**
+   
+   Update `services/firebase.ts` with your Firebase config:
+   ```typescript
+   const firebaseConfig = {
+     apiKey: "YOUR_API_KEY",
+     authDomain: "YOUR_AUTH_DOMAIN",
+     projectId: "YOUR_PROJECT_ID",
+     storageBucket: "YOUR_STORAGE_BUCKET",
+     messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+     appId: "YOUR_APP_ID"
+   };
    ```
 
-In the output, you'll find options to open the app in a
+4. **Set up Firestore Security Rules**
+   
+   Apply the rules from `FIRESTORE_RULES.md` in Firebase Console
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+5. **Start the development server**
+   ```bash
+   npx expo start --clear
+   ```
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## 🔐 Firestore Structure
 
-## Get a fresh project
+```
+users/
+  {userId}/
+    - email: string
+    - householdIds: string[]
+    - createdAt: timestamp
 
-When you're ready, run:
+households/
+  {householdId}/
+    - name: string
+    - members: string[]
+    - createdAt: timestamp
+    - updatedAt: timestamp
+    
+    shoppingLists/
+      default/
+        items/
+          {itemId}/
+            - name: string
+            - quantity: number
+            - completed: boolean
+            - addedBy: string
+            - createdAt: timestamp
+            - updatedAt: timestamp
 
-```bash
-npm run reset-project
+invites/
+  {inviteCode}/
+    - householdId: string
+    - createdBy: string
+    - createdAt: timestamp
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 🔑 Key Features Explained
 
-## Learn more
+### Authentication Flow
+1. User signs up/logs in
+2. Always shown household selection screen
+3. Can create new household or join existing via invite code
+4. Selected household persists across sessions
 
-To learn more about developing your project with Expo, look at the following resources:
+### Household Management
+- Create households with unique names
+- Generate 6-character invite codes
+- Share codes to invite members
+- Switch between households anytime
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Shopping Lists
+- Real-time collaboration using Firestore snapshots
+- Add items with quantity
+- Mark items as complete
+- See who added each item
+- Automatic sorting (newest first)
 
-## Join the community
+### Real-time Sync
+- All household members see changes instantly
+- No manual refresh needed
+- Uses Firestore `onSnapshot` listeners
 
-Join our community of developers creating universal apps.
+## 🎨 UI Features
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- **Dark theme** - Easy on the eyes
+- **Serbian language** - Fully localized interface
+- **Loading states** - Clear feedback during operations
+- **Error handling** - User-friendly error messages
+- **Empty states** - Helpful messages when lists are empty
+
+## 🔒 Security
+
+- Authentication required for all operations
+- Users can only access their own households
+- Shopping lists scoped to household membership
+- Firestore security rules enforce access control
+- Invite codes validate household access
+
+## 📝 Scripts
+
+```bash
+# Start with cache clearing (recommended)
+npx expo start --clear
+
+# Start with tunnel (for testing on physical devices)
+npx expo start --tunnel
+
+# Run on iOS simulator
+npx expo start --ios
+
+# Run on Android emulator
+npx expo start --android
+```
+
+## 🐛 Known Issues
+
+- Metro bundler cache may require periodic clearing
+- Console logs may not update without app restart during development
+
+## 🔮 Future Enhancements
+
+- [ ] Multiple shopping lists per household (Weekly, Party, etc.)
+- [ ] Shopping list categories (Produce, Dairy, etc.)
+- [ ] Push notifications for list updates
+- [ ] Item history and analytics
+- [ ] Bulk delete completed items
+- [ ] User profile customization
+- [ ] Household admin roles
+- [ ] Export shopping lists
+
+---
+
+Built with ❤️ using React Native and Firebase
